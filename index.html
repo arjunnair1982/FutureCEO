@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Future CEO Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden; /* Prevents scrollbars from flashing during transitions */
+        }
+        .card {
+            background-color: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease-in-out;
+        }
+        .btn {
+            border-radius: 0.75rem;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .btn-primary {
+            background-color: #4f46e5;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #1f2937;
+        }
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+        .input-field {
+            border-radius: 0.75rem;
+            border: 1px solid #d1d5db;
+            padding: 0.75rem 1rem;
+            width: 100%;
+            font-size: 1.125rem;
+            text-align: center;
+        }
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-backdrop.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+        .modal-backdrop.active .modal-content {
+            transform: scale(1);
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            gap: 0.5rem;
+        }
+        .decision-option.selected {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <!-- Main Game Container -->
+    <div id="gameContainer" class="w-full max-w-4xl mx-auto">
+        
+        <!-- Game Header -->
+        <header class="mb-6 text-center">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800">Future CEO 🚀</h1>
+            <p class="text-gray-500 mt-2">Your journey to becoming a business tycoon starts now!</p>
+        </header>
+        
+        <!-- Status Bar -->
+        <div class="flex justify-around items-center bg-white p-4 rounded-xl shadow-md mb-6 card">
+            <div class="text-center">
+                <span class="text-sm text-gray-500 font-medium">WEEK</span>
+                <p id="weekDisplay" class="text-2xl font-bold text-indigo-600">1 / 3</p>
+            </div>
+            <div class="text-center">
+                <span class="text-sm text-gray-500 font-medium">AVAILABLE CASH</span>
+                <p id="cashDisplay" class="text-2xl font-bold text-green-600">$120</p>
+            </div>
+        </div>
+
+        <!-- Decision Screen -->
+        <div id="decisionScreen" class="card p-6 md:p-8">
+            <!-- Product Display -->
+            <div class="flex flex-col md:flex-row items-center gap-6 mb-8">
+                <img id="productImage" src="https://placehold.co/150x150/e0e7ff/4f46e5?text=T-Shirt" alt="Product Image" class="w-36 h-36 rounded-lg object-cover">
+                <div>
+                    <h2 id="productName" class="text-2xl font-bold text-gray-800">This Week's Product: Cool T-Shirt</h2>
+                    <p class="text-gray-600">Cost per unit: <span class="font-bold">$8.00</span>. Make your decisions for the week!</p>
+                </div>
+            </div>
+
+            <!-- Decision Panels -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- 1. Selling Price -->
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <h3 class="font-bold text-lg mb-3 text-gray-700">1. Selling Price</h3>
+                    <div id="priceOptions" class="space-y-2">
+                        <button data-price="5" class="w-full text-left p-3 border-2 border-gray-200 rounded-lg decision-option">$5.00 (Loss per unit)</button>
+                        <button data-price="10" class="w-full text-left p-3 border-2 border-gray-200 rounded-lg decision-option">$10.00</button>
+                        <button data-price="15" class="w-full text-left p-3 border-2 border-gray-200 rounded-lg decision-option">$15.00</button>
+                    </div>
+                </div>
+                
+                <!-- 2. Marketing Spend -->
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <h3 class="font-bold text-lg mb-3 text-gray-700">2. Marketing Spend</h3>
+                    <div id="marketingOptions" class="space-y-2">
+                        <button data-marketing="0" class="w-full text-left p-3 border-2 border-gray-200 rounded-lg decision-option">$0</button>
+                        <button data-marketing="50" class="w-full text-left p-3 border-2 border-gray-200 rounded-lg decision-option">$50</button>
+                        <button data-marketing="100" class="w-full text-left p-3 border-2 border-gray-200 rounded-lg decision-option">$100</button>
+                    </div>
+                </div>
+
+                <!-- 3. Inventory Purchase -->
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <h3 class="font-bold text-lg mb-3 text-gray-700">3. Inventory to Buy</h3>
+                    <input type="number" id="inventoryInput" placeholder="Enter quantity" class="input-field" min="0">
+                    <p class="text-sm text-gray-500 mt-2">Cost: <span id="inventoryCostDisplay" class="font-semibold">$0</span></p>
+                </div>
+            </div>
+
+            <!-- Action Button -->
+            <div class="mt-8 text-center">
+                <button id="endWeekBtn" class="btn btn-primary w-full md:w-auto">Finalize Decisions & End Week</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Outcome Modal -->
+    <div id="weeklyOutcomeModal" class="modal-backdrop">
+        <div class="modal-content card w-full max-w-lg p-6 md:p-8 text-center">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Week <span id="outcomeWeek"></span> Results!</h2>
+            <p id="outcomeMessage" class="text-lg mb-6"></p>
+            <div class="space-y-3 text-left bg-gray-50 p-4 rounded-lg">
+                <div class="flex justify-between items-center"><span class="text-gray-600">Price Set:</span><span id="outcomePrice" class="font-bold text-lg"></span></div>
+                <div class="flex justify-between items-center"><span class="text-gray-600">Marketing Spend:</span><span id="outcomeMarketing" class="font-bold text-lg"></span></div>
+                <div class="flex justify-between items-center"><span class="text-gray-600">Units Purchased:</span><span id="outcomeUnitsBought" class="font-bold text-lg"></span></div>
+                <div class="flex justify-between items-center"><span class="text-gray-600">Units Sold:</span><span id="outcomeUnitsSold" class="font-bold text-lg"></span></div>
+                <hr class="my-3">
+                <div class="flex justify-between items-center"><span class="text-gray-600">Revenue:</span><span id="outcomeRevenue" class="font-bold text-lg text-green-600"></span></div>
+                <div class="flex justify-between items-center"><span class="text-gray-600">Total Cost:</span><span id="outcomeCost" class="font-bold text-lg text-red-600"></span></div>
+                <hr class="my-3 border-t-2 border-dashed">
+                <div class="flex justify-between items-center"><span class="text-xl font-bold">PROFIT / LOSS:</span><span id="outcomeProfit" class="font-extrabold text-2xl"></span></div>
+            </div>
+            <button id="nextWeekBtn" class="btn btn-primary mt-6 w-full">Continue to Next Week</button>
+        </div>
+    </div>
+    
+    <!-- Final Results Modal -->
+    <div id="finalResultsModal" class="modal-backdrop">
+        <div class="modal-content card w-full max-w-2xl p-6 md:p-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4 text-center">Game Over! Here's Your Performance</h2>
+            
+            <!-- Summary Table -->
+            <div class="overflow-x-auto mb-6">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-4 py-3">Week</th>
+                            <th scope="col" class="px-4 py-3">Price</th>
+                            <th scope="col" class="px-4 py-3">Marketing</th>
+                            <th scope="col" class="px-4 py-3">Bought</th>
+                            <th scope="col" class="px-4 py-3">Sold</th>
+                            <th scope="col" class="px-4 py-3">Revenue</th>
+                            <th scope="col" class="px-4 py-3">Profit/Loss</th>
+                            <th scope="col" class="px-4 py-3">Ending Cash</th>
+                        </tr>
+                    </thead>
+                    <tbody id="finalTableBody">
+                        <!-- Rows will be injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Key Metrics & Badges -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-indigo-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-lg text-indigo-800">Final Metrics</h3>
+                    <div class="mt-2 space-y-2">
+                        <div class="flex justify-between"><span>Total Profit/Loss:</span><span id="finalTotalProfit" class="font-bold"></span></div>
+                        <div class="flex justify-between"><span>Return on Investment:</span><span id="finalROI" class="font-bold"></span></div>
+                    </div>
+                </div>
+                 <div class="bg-amber-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-lg text-amber-800">Your Badges 🏆</h3>
+                    <div id="badgesContainer" class="mt-2 space-y-2">
+                        <!-- Badges will be injected by JS -->
+                    </div>
+                </div>
+            </div>
+            
+            <button id="restartGameBtn" class="btn btn-primary mt-8 w-full">Play Again!</button>
+        </div>
+    </div>
+
+    <!-- Error/Alert Modal -->
+    <div id="alertModal" class="modal-backdrop">
+        <div class="modal-content card w-full max-w-sm p-6 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            <h3 id="alertTitle" class="text-lg leading-6 font-medium text-gray-900 mt-4">Error</h3>
+            <div class="mt-2">
+                <p id="alertMessage" class="text-sm text-gray-500"></p>
+            </div>
+            <div class="mt-4">
+                <button id="alertOkBtn" type="button" class="btn btn-primary w-full">Got it</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- GAME STATE & CONSTANTS ---
+            const STARTING_CASH = 120;
+            const COST_PER_UNIT = 8;
+            const MAX_WEEKS = 3;
+            const PRODUCTS = [
+                { name: 'Cool T-Shirt', image: 'https://placehold.co/150x150/e0e7ff/4f46e5?text=T-Shirt' },
+                { name: 'Slick Cap', image: 'https://placehold.co/150x150/d1fae5/059669?text=Cap' },
+                { name: 'Posh Hoodie', image: 'https://placehold.co/150x150/fee2e2/dc2626?text=Hoodie' }
+            ];
+
+            let currentWeek = 1;
+            let cash = STARTING_CASH;
+            let weeklyHistory = [];
+            
+            let selectedPrice = null;
+            let selectedMarketing = null;
+
+            // --- UI ELEMENTS ---
+            const weekDisplay = document.getElementById('weekDisplay');
+            const cashDisplay = document.getElementById('cashDisplay');
+            const inventoryInput = document.getElementById('inventoryInput');
+            const inventoryCostDisplay = document.getElementById('inventoryCostDisplay');
+            const endWeekBtn = document.getElementById('endWeekBtn');
+            const priceOptions = document.getElementById('priceOptions');
+            const marketingOptions = document.getElementById('marketingOptions');
+            const productName = document.getElementById('productName');
+            const productImage = document.getElementById('productImage');
+
+            // Modals
+            const weeklyOutcomeModal = document.getElementById('weeklyOutcomeModal');
+            const finalResultsModal = document.getElementById('finalResultsModal');
+            const alertModal = document.getElementById('alertModal');
+            const alertOkBtn = document.getElementById('alertOkBtn');
+            const nextWeekBtn = document.getElementById('nextWeekBtn');
+            const restartGameBtn = document.getElementById('restartGameBtn');
+            
+
+            // --- EVENT LISTENERS ---
+            
+            // Handle decision selections
+            priceOptions.addEventListener('click', (e) => handleOptionSelect(e, 'price'));
+            marketingOptions.addEventListener('click', (e) => handleOptionSelect(e, 'marketing'));
+
+            inventoryInput.addEventListener('input', updateInventoryCost);
+            endWeekBtn.addEventListener('click', runWeek);
+            nextWeekBtn.addEventListener('click', setupNextWeek);
+            restartGameBtn.addEventListener('click', () => location.reload());
+            alertOkBtn.addEventListener('click', () => showAlert(null, null, false));
+
+
+            // --- GAME LOGIC ---
+
+            function initGame() {
+                currentWeek = 1;
+                cash = STARTING_CASH;
+                weeklyHistory = [];
+                selectedPrice = null;
+                selectedMarketing = null;
+                inventoryInput.value = '';
+                updateUI();
+                clearSelections();
+            }
+
+            function handleOptionSelect(event, type) {
+                const button = event.target.closest('button');
+                if (!button) return;
+
+                const optionsContainer = type === 'price' ? priceOptions : marketingOptions;
+                
+                // Remove 'selected' class from all buttons in the group
+                optionsContainer.querySelectorAll('button').forEach(btn => btn.classList.remove('selected'));
+                
+                // Add 'selected' class to the clicked button
+                button.classList.add('selected');
+
+                if (type === 'price') {
+                    selectedPrice = parseInt(button.dataset.price);
+                } else if (type === 'marketing') {
+                    selectedMarketing = parseInt(button.dataset.marketing);
+                }
+            }
+            
+            function updateInventoryCost() {
+                const quantity = parseInt(inventoryInput.value) || 0;
+                const cost = quantity * COST_PER_UNIT;
+                inventoryCostDisplay.textContent = `$${cost}`;
+            }
+
+            function runWeek() {
+                // 1. Validate Inputs
+                const inventoryToBuy = parseInt(inventoryInput.value);
+                if (selectedPrice === null) {
+                    showAlert('Hold Up, CEO!', 'You must select a selling price.');
+                    return;
+                }
+                if (selectedMarketing === null) {
+                    showAlert('Hold Up, CEO!', 'You must choose a marketing spend.');
+                    return;
+                }
+                if (isNaN(inventoryToBuy) || inventoryToBuy < 0) {
+                     showAlert('Hold Up, CEO!', 'Please enter a valid quantity for inventory.');
+                    return;
+                }
+
+                const inventoryCost = inventoryToBuy * COST_PER_UNIT;
+                const totalSpend = inventoryCost + selectedMarketing;
+
+                if (totalSpend > cash) {
+                    showAlert('Not Enough Cash!', `Your planned spend of $${totalSpend} ($${inventoryCost} for inventory + $${selectedMarketing} for marketing) exceeds your available cash of $${cash}.`);
+                    return;
+                }
+
+                // 2. Calculate Demand
+                const baseDemand = { 5: 50, 10: 25, 15: 12 }[selectedPrice];
+                let marketingMultiplier = 1.0;
+                const rand = Math.random();
+
+                if (selectedMarketing === 50) {
+                    if (rand < 0.7) { // 70% chance
+                        marketingMultiplier = 1.0 + Math.random() * 0.3; // 1.0 to 1.3
+                    } else { // 30% chance
+                        marketingMultiplier = 1.5 + Math.random() * 0.5; // 1.5 to 2.0
+                    }
+                } else if (selectedMarketing === 100) {
+                    if (rand < 0.6) { // 60% chance
+                        marketingMultiplier = 1.2 + Math.random() * 0.6; // 1.2 to 1.8
+                    } else { // 40% chance
+                        marketingMultiplier = 2.0 + Math.random() * 1.0; // 2.0 to 3.0
+                    }
+                }
+                
+                const adjustedDemand = Math.round(baseDemand * marketingMultiplier);
+                
+                // 3. Calculate Financials
+                const unitsSold = Math.min(inventoryToBuy, adjustedDemand);
+                const revenue = unitsSold * selectedPrice;
+                const totalCost = inventoryCost + selectedMarketing;
+                const profit = revenue - totalCost;
+
+                // 4. Update Game State
+                cash += profit;
+                
+                const weekResult = {
+                    week: currentWeek,
+                    product: PRODUCTS[currentWeek - 1].name,
+                    price: selectedPrice,
+                    marketing: selectedMarketing,
+                    unitsBought: inventoryToBuy,
+                    unitsSold,
+                    revenue,
+                    cost: totalCost,
+                    profit,
+                    endingCash: cash
+                };
+                weeklyHistory.push(weekResult);
+
+                // 5. Show Outcome
+                showWeeklyOutcome(weekResult);
+            }
+
+            function setupNextWeek() {
+                currentWeek++;
+                weeklyOutcomeModal.classList.remove('active');
+                if (currentWeek > MAX_WEEKS) {
+                    showFinalResults();
+                } else {
+                    inventoryInput.value = '';
+                    selectedPrice = null;
+                    selectedMarketing = null;
+                    clearSelections();
+                    updateUI();
+                }
+            }
+
+            // --- UI UPDATE FUNCTIONS ---
+            
+            function updateUI() {
+                weekDisplay.textContent = `${currentWeek} / ${MAX_WEEKS}`;
+                cashDisplay.textContent = `$${Math.round(cash)}`;
+                updateInventoryCost();
+
+                const product = PRODUCTS[currentWeek - 1];
+                productName.textContent = `This Week's Product: ${product.name}`;
+                productImage.src = product.image;
+                productImage.alt = product.name;
+            }
+            
+            function clearSelections() {
+                priceOptions.querySelectorAll('button').forEach(btn => btn.classList.remove('selected'));
+                marketingOptions.querySelectorAll('button').forEach(btn => btn.classList.remove('selected'));
+            }
+
+            function showWeeklyOutcome(result) {
+                document.getElementById('outcomeWeek').textContent = result.week;
+                document.getElementById('outcomePrice').textContent = `$${result.price}`;
+                document.getElementById('outcomeMarketing').textContent = `$${result.marketing}`;
+                document.getElementById('outcomeUnitsBought').textContent = result.unitsBought;
+                document.getElementById('outcomeUnitsSold').textContent = `${result.unitsSold} / ${Math.round(result.unitsBought > 0 ? (result.unitsSold/result.unitsBought*100) : 0)}%`;
+                document.getElementById('outcomeRevenue').textContent = `+$${result.revenue}`;
+                document.getElementById('outcomeCost').textContent = `-$${result.cost}`;
+                
+                const profitDisplay = document.getElementById('outcomeProfit');
+                profitDisplay.textContent = `${result.profit >= 0 ? '+' : ''}$${result.profit}`;
+                profitDisplay.className = `font-extrabold text-2xl ${result.profit >= 0 ? 'text-green-600' : 'text-red-600'}`;
+
+                const outcomeMessage = document.getElementById('outcomeMessage');
+                if (result.profit > 50) {
+                   outcomeMessage.textContent = "Amazing results! You're a natural.";
+                } else if (result.profit > 0) {
+                   outcomeMessage.textContent = "Nice! You made a profit.";
+                } else if (result.profit === 0) {
+                   outcomeMessage.textContent = "Broke even. A learning experience!";
+                } else {
+                   outcomeMessage.textContent = "Ouch, a loss. Let's bounce back next week!";
+                }
+
+                weeklyOutcomeModal.classList.add('active');
+            }
+
+            function showFinalResults() {
+                const tableBody = document.getElementById('finalTableBody');
+                tableBody.innerHTML = ''; // Clear previous results
+                
+                let totalProfit = 0;
+                weeklyHistory.forEach(r => {
+                    totalProfit += r.profit;
+                    const profitClass = r.profit >= 0 ? 'text-green-600' : 'text-red-600';
+                    const row = `
+                        <tr class="bg-white border-b">
+                            <td class="px-4 py-3 font-medium text-gray-900">${r.week}</td>
+                            <td class="px-4 py-3">$${r.price}</td>
+                            <td class="px-4 py-3">$${r.marketing}</td>
+                            <td class="px-4 py-3">${r.unitsBought}</td>
+                            <td class="px-4 py-3">${r.unitsSold}</td>
+                            <td class="px-4 py-3">$${r.revenue}</td>
+                            <td class="px-4 py-3 font-bold ${profitClass}">${r.profit >= 0 ? '+' : ''}$${r.profit}</td>
+                            <td class="px-4 py-3 font-semibold">$${Math.round(r.endingCash)}</td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+
+                const finalTotalProfit = document.getElementById('finalTotalProfit');
+                finalTotalProfit.textContent = `${totalProfit >= 0 ? '+' : ''}$${totalProfit}`;
+                finalTotalProfit.className = `font-bold ${totalProfit >= 0 ? 'text-green-700' : 'text-red-700'}`;
+
+                const roi = ((totalProfit / STARTING_CASH) * 100).toFixed(1);
+                const finalROI = document.getElementById('finalROI');
+                finalROI.textContent = `${roi}%`;
+                finalROI.className = `font-bold ${roi >= 0 ? 'text-green-700' : 'text-red-700'}`;
+                
+                awardBadges(totalProfit);
+                finalResultsModal.classList.add('active');
+            }
+            
+            function awardBadges(totalProfit) {
+                const badgesContainer = document.getElementById('badgesContainer');
+                badgesContainer.innerHTML = '';
+                
+                let awarded = false;
+                
+                if (totalProfit > 0) {
+                    badgesContainer.innerHTML += `<div class="badge bg-green-100 text-green-800">💸 Profit Pro</div>`;
+                    awarded = true;
+                }
+                
+                const totalUnitsSold = weeklyHistory.reduce((sum, r) => sum + r.unitsSold, 0);
+                const totalUnitsBought = weeklyHistory.reduce((sum, r) => sum + r.unitsBought, 0);
+                if (totalUnitsBought > 0 && (totalUnitsSold / totalUnitsBought) > 0.85) {
+                    badgesContainer.innerHTML += `<div class="badge bg-blue-100 text-blue-800">📊 Efficiency Expert</div>`;
+                    awarded = true;
+                }
+                
+                const highMarketingPlays = weeklyHistory.filter(r => r.marketing >= 50 && r.profit > 0).length;
+                if (highMarketingPlays >= 2) {
+                     badgesContainer.innerHTML += `<div class="badge bg-purple-100 text-purple-800">🧠 Strategic Thinker</div>`;
+                     awarded = true;
+                }
+                
+                if (!awarded) {
+                    badgesContainer.innerHTML = `<p class="text-gray-500">No badges this time. Keep trying!</p>`;
+                }
+            }
+            
+            function showAlert(title, message, show = true) {
+                if(show) {
+                    document.getElementById('alertTitle').textContent = title;
+                    document.getElementById('alertMessage').textContent = message;
+                    alertModal.classList.add('active');
+                } else {
+                    alertModal.classList.remove('active');
+                }
+            }
+
+
+            // --- INITIALIZE GAME ---
+            initGame();
+        });
+    </script>
+
+</body>
+</html>
